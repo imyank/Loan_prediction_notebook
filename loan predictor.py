@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[3]:
 
+
+## Importing necessary libraries
 
 import numpy as np
 import pandas as pd
@@ -11,8 +12,9 @@ import seaborn as sns
 get_ipython().run_line_magic('matplotlib', 'inline')
 
 
-# In[4]:
 
+
+## downloading train and test data and saving it
 
 df_train=pd.read_csv("train_ctrUa4K.csv")
 df_test=pd.read_csv("test_lAUu6dG.csv")
@@ -22,27 +24,29 @@ combine=[df_train,df_test]
 pd.set_option("display.max_columns",500)
 
 
-# In[5]:
+
 
 
 df_train.head()
 
 
-# In[10]:
+
 
 
 df_train['Loan_Amount_Term'].unique()
 #df_train.isnull().sum()
 
 
-# In[7]:
+
 
 
 df_train.corr()
 
 
-# In[6]:
 
+
+
+### FEATURE ENGINEERING (creation of new features)
 
 List=['Urban', 'Rural', 'Semiurban']
 for dataset in combine:
@@ -60,14 +64,8 @@ for dataset in combine:
     dataset['Dependents']=dataset['Dependents'].fillna(dataset['Dependents'].mode()[0])
 
 
-# In[7]:
 
-
-df_train.isnull().sum()
-
-
-# In[8]:
-
+## Handling NAN values
 
 n_nan_train=[f for f in df_train.columns if df_train[f].isnull().sum()>1 and df_train[f].dtypes!='O']
 n_nan_test=[f for f in df_test.columns if df_test[f].isnull().sum()>1 and df_test[f].dtypes!='O']
@@ -78,9 +76,6 @@ for f in n_nan_test:
     med_val=df_test[f].median()
     df_test[f].fillna(med_val,inplace=True)
 combine=[df_train,df_test]
-
-
-# In[9]:
 
 
 for dataset in combine:
@@ -96,7 +91,7 @@ for dataset in combine:
 df_train['Loan_Status'] = df_train['Loan_Status'].map( {'Y': 1, 'N': 0} ).astype(int)
 
 
-# In[10]:
+### More feature creation
 
 
 for dataset in combine:
@@ -114,9 +109,7 @@ for dataset in combine:
 for dataset in combine:
     dataset['balance_log'] = np.log(dataset['balance']) 
 
-
-# In[11]:
-
+## Converting to log 
 
 df_train['LoanAmount_log'] = np.log(df_train['LoanAmount'])
 df_test['LoanAmount_log'] = np.log(df_test['LoanAmount'])
@@ -129,7 +122,7 @@ df_test.head()
 #c_nan=[f for f in dataset.columns if dataset[f].isnull().sum()>1 and dataset[f].dtypes=='O']
 
 
-# In[12]:
+### ENCODING
 
 
 for dataset in combine:
@@ -140,44 +133,15 @@ for dataset in combine:
     dataset['Property_Area'] = dataset['Property_Area'].map( {'Semiurban': 0, 'Urban': 1, 'Rural':2} ).astype(int)
 for dataset in combine:
     dataset['Married'] = dataset['Married'].map( {'Yes': 1, 'No': 0} ).astype(int)
-
-
-# In[13]:
-
-
-#n_nan_train=[f for f in df_train.columns if df_train[f].isnull().sum()>=0 and df_train[f].dtypes!='O']
-'''n_nan_test=[f for f in df_test.columns if df_test[f].isnull().sum()>=0 and df_test[f].dtypes!='O']
-for f in n_nan_test:
-    med_val=df_test[f].median()
-    df_test[f]=df_test[f].fillna(med_val,inplace=True)'''
-
-df_train.head()
-
-
-# In[14]:
-
-
-df_test.isnull().sum()
-
-
-# In[15]:
-
-
 for dataset in combine:
     dataset['Dependents'] = dataset['Dependents'].map( {'0': 0, '1': 1,'2': 2, '3+': 3} ).astype(int)
 df_train['depenBand'] = pd.cut(df_train['Dependents'],4)
 df_train[['depenBand', 'Loan_Status']].groupby(['depenBand'], as_index=False).mean().sort_values(by='depenBand', ascending=True)
 
-
-# In[16]:
-
+## DATASET PARTITIONING to get more insights
 
 df_train['loanBand'] = pd.cut(df_train['Loan_Amount_Term'],5)
 df_train[['loanBand', 'Loan_Status']].groupby(['loanBand'], as_index=False).mean().sort_values(by='loanBand', ascending=True)
-
-
-# In[17]:
-
 
 for dataset in combine:    
     dataset.loc[ dataset['Dependents'] <= 0.75, 'Loan_Amount_Term'] = 0
@@ -192,25 +156,7 @@ for dataset in combine:
     dataset.loc[(dataset['Loan_Amount_Term'] > 386) & (dataset['Loan_Amount_Term'] <= 480), 'Loan_Amount_Term'] = 4
 df_train = df_train.drop(['loanBand'], axis=1)
 df_train = df_train.drop(['depenBand'], axis=1)
-#df_test = df_test.drop(['loanBand'], axis=1)
 combine = [df_train, df_test]
-df_test.head()
-
-
-# In[18]:
-
-
-
-df_train.isnull().sum()
-
-
-# In[19]:
-
-
-df_test.head()
-
-
-# In[20]:
 
 
 n_nan_train=[f for f in df_train.columns if df_train[f].isnull().sum()>1 and df_train[f].dtypes!='O']
@@ -221,7 +167,10 @@ for f in n_nan_train:
 for f in n_nan_test:
     med=df_test[f].median()
     df_test[f].fillna(med,inplace=True)
-#df_test['balance_log'].isnull().sum()
+
+
+### Selecting top k features
+
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 X = df_train.drop('Loan_Status',axis=1)  #independent columns
@@ -233,13 +182,15 @@ fit = bestfeatures.fit(X,y)
 dfscores = pd.DataFrame(fit.scores_)
 dfcolumns = pd.DataFrame(X.columns)
 featureScores = pd.concat([dfcolumns,dfscores],axis=1)
-featureScores.columns = ['Specs','Score']  #naming the dataframe columns
+featureScores.columns = ['Specs','Score']  
+
+
 #featureScores
+
+
 print(featureScores.nlargest(10,'Score'))
 
-
-# In[21]:
-
+## Aggregating features
 
 for dataset in combine:
     dataset['totalincome_log'] = dataset['totalincome_log']/(dataset["totalincome_log"].median())
@@ -255,12 +206,7 @@ combine = [df_train, df_test]
 
 df_test.head()
 
-
-# In[22]:
-
-
-#from sklearn.model_selection import train_test_split
-#X_train,X_test,y_train,y_test=train_test_split(df_train.drop('Loan_Status',axis=1),df_train['Loan_Status'],test_size=0.2,random_state=42)
+### Splitting
 
 X_train=df_train.drop('Loan_Status',axis=1)
 y_train=df_train['Loan_Status']
@@ -273,7 +219,7 @@ y_train = y_train.astype(float)
 X_test = X_test.astype(float)
 
 
-# In[23]:
+### StandardScaler
 
 
 from sklearn.preprocessing import StandardScaler
@@ -282,8 +228,9 @@ X_train = sc.fit_transform(X_train)
 X_test = sc.transform(X_test)
 
 
-# In[32]:
+#### Model testing 
 
+## 1 TPOT 
 
 '''import tpot#85.016
 from tpot import TPOTClassifier
@@ -308,14 +255,9 @@ tpot.score(X_train, y_train)
 acc_random_forest = round(tpot.score(X_train, y_train) * 100, 3)
 acc_random_forest'''
 
-#XGBClassifier(input_matrix, learning_rate=0.1, max_depth=3, min_child_weight=1, n_estimators=100, nthread=1, subsample=0.35000000000000003)
+### 2. XG Boost
 
-
-# In[58]:
-
-
-
-import xgboost as xgb#1025.234932671499#1022.5823395094012
+import xgboost as xgb
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import GridSearchCV
 '''parameters = [{'learning_rate' : [0.05,0.04,0.1,0.09],
@@ -341,8 +283,6 @@ acc_random_forest = round(reg.score(X_train, y_train) * 100, 3)
 acc_random_forest
 
 
-# In[59]:
-
 
 pred['Loan_Status']=pd.DataFrame(Y_pred)
 pred['Loan_Status'].replace(0, 'N',inplace=True) 
@@ -354,7 +294,7 @@ datasets.to_csv('sample_submission_49d68Cx.csv',index=False)
 #datasets.head(20)
 
 
-# In[18]:
+## 3. LogisticRegression
 
 
 '''from sklearn.linear_model import LogisticRegression
@@ -380,7 +320,7 @@ acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 3)
 #acc_random_forest#80.945#81.1184#80.9571'''
 
 
-# In[11]:
+
 
 
 '''random_forest = LogisticRegression(C=0.012742749857031334,
@@ -395,26 +335,6 @@ acc_random_forest = round(random_forest.score(X_train, Y_train) * 100, 3)
 #acc_random_forest
 grid_search.best_score_'''
 
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[12]:
-
-
-#sns.heatmap(dataset.isnull(),yticklabels=False,cbar=False)
-
-
-# In[ ]:
 
 
 
