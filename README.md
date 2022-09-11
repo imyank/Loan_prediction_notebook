@@ -5,4 +5,6 @@ It is a binary classification project.
 Nan values are handled using median or mode.
 Some new attributes are created like debt ratio, EMI etc.
 Algorithm used XGboost classifier tuned with GridSearchCV
-also used Tpot classifier for verification
+also used Tpot classifier for verification.
+
+For implementation please refer code
