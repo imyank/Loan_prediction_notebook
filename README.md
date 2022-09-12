@@ -9,12 +9,12 @@ Dream Housing Finance company wants to automate the loan eligibility process (re
 
 ## Overview
 
-In this project I have used ML algorithm to predict loan status of for a given person.
+In this project I have used various ML algorithms to predict loan status of for a given person.
 It is a binary classification project.
-Nan values are handled using median or mode.
+Nan values are handled using median or mode and other imputation.
 Some new attributes are created like debt ratio, EMI etc.
-Algorithm used XGboost classifier tuned with GridSearchCV
-also used Tpot classifier for verification.
+Various algorithms used like XGboost classifier tuned with GridSearchCV, logistic regression,
+Tpot classifier etc.
 
 ## XGBoost with proper tuning gives the best results on submission around 81%
 
